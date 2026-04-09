@@ -7,6 +7,79 @@ const totalQuestions = questions.length;
 const optionKeys = ["A", "B", "C", "D"];
 
 /**
+ * VARK Learning Style Mapping (Fleming & Mills, 1992)
+ * Maps style_belajar values to VARK categories
+ */
+const VARK_MAPPING = {
+  video: {
+    vark_code: "V",
+    vark_type: "Visual",
+    vark_full: "Pembelajaran Visual (Video, Diagram, Warna)",
+  },
+  pdf: {
+    vark_code: "R",
+    vark_type: "Reading/Writing",
+    vark_full: "Pembelajaran Reading/Writing (Text, Artikel, Notes)",
+  },
+  guru: {
+    vark_code: "A",
+    vark_type: "Aural",
+    vark_full: "Pembelajaran Aural (Mendengar, Diskusi, Penjelasan)",
+  },
+  explore: {
+    vark_code: "K",
+    vark_type: "Kinesthetic",
+    vark_full: "Pembelajaran Kinesthetic (Hands-on, Praktek, Simulasi)",
+  },
+};
+
+/**
+ * Transform style_belajar value to VARK learning style info
+ */
+function transformLearningStyle(styleBelajarValue) {
+  return (
+    VARK_MAPPING[styleBelajarValue] || {
+      vark_code: "?",
+      vark_type: "Unknown",
+      vark_full: "Gaya belajar tidak dikenali",
+    }
+  );
+}
+
+/**
+ * Calculate Proficiency Score from readiness grid (0-100)
+ * Formula: (sum of all readiness levels / 10) * 100
+ * Max possible: 5 items x level 2 = 10
+ */
+function calculateProficiencyScore(readinessData) {
+  const vals = Object.values(readinessData).map((v) => (v !== null ? v : 0));
+  const totalLevel = vals.reduce((a, b) => a + b, 0);
+  return (totalLevel / 10) * 100;
+}
+
+/**
+ * Calculate Quiz Score (0 or 100)
+ * Finds the correct answer dynamically from questions data
+ */
+function calculateQuizScore(quizAnswer) {
+  const quizQuestion = questions.find((q) => q.id === "quiz");
+  if (!quizQuestion) return 0;
+  const correctAnswer = quizQuestion.opts.find((o) => o.ok === true)?.v;
+  return quizAnswer === correctAnswer ? 100 : 0;
+}
+
+/**
+ * Calculate Final Readiness Score (0-100)
+ * Formula: (Proficiency x 0.7) + (Quiz x 0.3)
+ * Based on: Bloom's Taxonomy + Self-Efficacy Theory
+ */
+function calculateReadinessScore(readinessData, quizAnswer) {
+  const proficiency = calculateProficiencyScore(readinessData);
+  const quiz = calculateQuizScore(quizAnswer);
+  return Math.round(proficiency * 0.7 + quiz * 0.3);
+}
+
+/**
  * Escape special characters to prevent XSS
  */
 const esc = (text) => {
@@ -264,16 +337,23 @@ async function showResult() {
         </div>
     </div>`;
 
-  const readinessAns = userAnswers.readiness;
-  const maxItems = 5;
-  const maxScore = maxItems * 2;
-  const vals = Object.values(readinessAns).map((v) => (v !== null ? v : 0));
-  const totalScore = vals.reduce((a, b) => a + b, 0);
-  const score = Math.round((totalScore / maxScore) * 100);
+  // Calculate Readiness Score (0-100)
+  const readinessScore = calculateReadinessScore(userAnswers.readiness, userAnswers.quiz);
+
+  // Transform Learning Style to VARK
+  const gayaBelajar = userAnswers.style_belajar?.gaya;
+  const varkAnalysis = transformLearningStyle(gayaBelajar);
+
+  // Attach calculated scores to userAnswers before submission
+  userAnswers.readinessScore = readinessScore;
+  userAnswers.varkAnalysis = varkAnalysis;
+
+  console.log("📊 Readiness Score:", readinessScore);
+  console.log("🧠 VARK Analysis:", varkAnalysis);
 
   await submitDataToSpreadsheet(userAnswers);
 
-  const category = score >= 70 ? "Mahir" : score >= 40 ? "Siap Intermediate" : "Pemula Terpandu";
+  const category = readinessScore >= 70 ? "Mahir" : readinessScore >= 40 ? "Siap Intermediate" : "Pemula Terpandu";
   const badgeCls = category === "Mahir" ? "bm" : category === "Siap Intermediate" ? "bs" : "bp";
 
   // Clear saved progress after successful submission
@@ -287,9 +367,10 @@ async function showResult() {
                 <div class="smeta">Hei ${esc(userAnswers.identity?.nama || "kamu")}!</div>
                 <div style="margin:.75rem 0"><span class="badge ${badgeCls}">${esc(category)}</span></div>
                 <div class="rcard">
-                    <div class="rhead"><div class="rlabel">Skor Readiness</div><div class="rval">${score}/100 — ${esc(category)}</div></div>
+                    <div class="rhead"><div class="rlabel">Skor Readiness</div><div class="rval">${readinessScore}/100 — ${esc(category)}</div></div>
                     <div class="rbody">
-                        <p>Data kamu berhasil direkam! Gurumu akan menganalisis hasilmu untuk menyesuaikan materi kelas.</p>
+                        <p><strong>Gaya Belajar (VARK):</strong> ${esc(varkAnalysis.vark_full)}</p>
+                        <p style="margin-top:8px">Data kamu berhasil direkam! Gurumu akan menganalisis hasilmu untuk menyesuaikan materi kelas.</p>
                     </div>
                 </div>
                 <div style="margin-top:1rem;display:flex;gap:8px">

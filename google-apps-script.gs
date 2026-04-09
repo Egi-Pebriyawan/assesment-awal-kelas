@@ -47,8 +47,9 @@ function doPost(e) {
      *
      * Expected Sheet Header Row:
      * [Timestamp, Nama, Kelas, Perangkat (checkbox), Software,
-     *  SUM, AVERAGE, IF, VLOOKUP, Pivot, Quiz, Interest (checkbox),
-     *  Tujuan Belajar (checkbox), Gaya Belajar]
+     *  SKOR KESIAPAN (0-100), SUM, AVERAGE, IF, VLOOKUP, Pivot, Quiz,
+     *  Interest (checkbox), Tujuan Belajar (checkbox), Gaya Belajar,
+     *  VARK Code, VARK Type]
      */
     const rowData = [
       new Date(), // Column A: Timestamp
@@ -56,15 +57,18 @@ function doPost(e) {
       safeGet(data.identity, "kelas"), // Column C: Kelas
       handleArray(data.access_perangkat), // Column D: Perangkat (ARRAY → String)
       safeGet(data.access_software, "ver"), // Column E: Software (String)
-      safeGet(data.readiness, "sum"), // Column F: SUM Formula
-      safeGet(data.readiness, "avg"), // Column G: AVERAGE Formula
-      safeGet(data.readiness, "if"), // Column H: IF Formula
-      safeGet(data.readiness, "vlookup"), // Column I: VLOOKUP Formula
-      safeGet(data.readiness, "pivot"), // Column J: Pivot Table
-      safeGet(data.quiz), // Column K: Quiz Answer
-      handleArray(data.interest), // Column L: Interest Topics (ARRAY → String)
-      handleArray(data.style_tujuan), // Column M: Tujuan Belajar (ARRAY → String) [NEW]
-      safeGet(data.style_belajar, "gaya"), // Column N: Gaya Belajar (String) [NEW]
+      safeGet(data, "readinessScore"), // Column F: ⭐ Readiness Score (0-100) [NEW]
+      safeGet(data.readiness, "sum"), // Column G: SUM Formula
+      safeGet(data.readiness, "avg"), // Column H: AVERAGE Formula
+      safeGet(data.readiness, "if"), // Column I: IF Formula
+      safeGet(data.readiness, "vlookup"), // Column J: VLOOKUP Formula
+      safeGet(data.readiness, "pivot"), // Column K: Pivot Table
+      safeGet(data.quiz), // Column L: Quiz Answer
+      handleArray(data.interest), // Column M: Interest Topics (ARRAY → String)
+      handleArray(data.style_tujuan), // Column N: Tujuan Belajar (ARRAY → String)
+      safeGet(data.style_belajar, "gaya"), // Column O: Gaya Belajar (String)
+      safeGet(data.varkAnalysis, "vark_code"), // Column P: ⭐ VARK Code (V/A/R/K) [NEW]
+      safeGet(data.varkAnalysis, "vark_type"), // Column Q: ⭐ VARK Type (Full name) [NEW]
     ];
 
     /**
@@ -118,8 +122,15 @@ function testData() {
     readiness: { sum: 2, avg: 1, if: 2, vlookup: 1, pivot: 0 },
     quiz: "b",
     interest: ["game", "finance"], // ARRAY - Checkbox
-    style_tujuan: ["kuliah", "kerja"], // ARRAY - Checkbox [NEW]
-    style_belajar: { gaya: "video" }, // STRING - Radio [NEW]
+    style_tujuan: ["kuliah", "kerja"], // ARRAY - Checkbox
+    style_belajar: { gaya: "video" }, // STRING - Radio
+    // ⭐ NEW - Calculated by Frontend
+    readinessScore: 75, // (50 * 0.7) + (100 * 0.3) = 65 → rounded
+    varkAnalysis: {
+      vark_code: "V",
+      vark_type: "Visual",
+      vark_full: "Pembelajaran Visual (Video, Diagram, Warna)",
+    },
   });
 
   // Simulate e object
@@ -147,6 +158,12 @@ function testData() {
  * 5. Copy URL yang di-generate
  * 6. Paste ke api.js sebagai GOOGLE_SHEET_URL
  *
+ * SPREADSHEET COLUMN STRUCTURE (17 columns):
+ * A: Timestamp | B: Nama | C: Kelas | D: Perangkat | E: Software
+ * F: SKOR KESIAPAN (0-100) ⭐ | G: SUM | H: AVG | I: IF | J: VLOOKUP | K: Pivot
+ * L: Quiz | M: Interest | N: Tujuan | O: Gaya Belajar
+ * P: VARK Code ⭐ | Q: VARK Type ⭐
+ *
  * TESTING:
  * 1. Di Apps Script Editor, Run > testData() untuk test
  * 2. Buka Sheet, harus ada row baru dengan mock data
@@ -156,4 +173,6 @@ function testData() {
  * - Error 403? Pastikan deployment set ke "Anyone" dapat akses
  * - Data tidak muncul? Check Logger (View > Logs) untuk error messages
  * - Array jadi "[object Object]"? Gunakan handleArray() di semua checkbox fields
+ * - Skor Kesiapan kosong? Pastikan frontend mengirim readinessScore
+ * - VARK kosong? Pastikan frontend mengirim varkAnalysis object
  */
