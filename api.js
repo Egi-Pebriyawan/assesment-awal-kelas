@@ -119,20 +119,12 @@ function validatePayload(data) {
   }
 
   // Validate readiness score range
-  if (
-    typeof data.readinessScore === "number" &&
-    (data.readinessScore < 0 || data.readinessScore > 100)
-  ) {
-    errors.push(
-      `Readiness score out of range: ${data.readinessScore} (expected 0-100)`
-    );
+  if (typeof data.readinessScore === "number" && (data.readinessScore < 0 || data.readinessScore > 100)) {
+    errors.push(`Readiness score out of range: ${data.readinessScore} (expected 0-100)`);
   }
 
   // Validate VARK code
-  if (
-    data.varkAnalysis &&
-    !["V", "A", "R", "K"].includes(data.varkAnalysis.code)
-  ) {
+  if (data.varkAnalysis && !["V", "A", "R", "K"].includes(data.varkAnalysis.code)) {
     errors.push(`Invalid VARK code: ${data.varkAnalysis.code}`);
   }
 
@@ -174,18 +166,9 @@ function formatPayloadForLogging(data) {
     const quiz = data.quiz || "N/A";
     const vark = data.varkAnalysis?.code || "?";
     const varkType = data.varkAnalysis?.type || "Unknown";
-    const perangkat = Array.isArray(data.access_perangkat)
-      ? data.access_perangkat.join(", ")
-      : "N/A";
+    const perangkat = Array.isArray(data.access_perangkat) ? data.access_perangkat.join(", ") : "N/A";
 
-    return (
-      `📊 Assessment Data:\n` +
-      `├─ Nama: ${nama} (Kelas: ${kelas})\n` +
-      `├─ Readiness Score: ${score}/100\n` +
-      `├─ Quiz Answer: ${quiz}\n` +
-      `├─ VARK Style: ${vark} (${varkType})\n` +
-      `└─ Devices: ${perangkat}`
-    );
+    return `📊 Assessment Data:\n` + `├─ Nama: ${nama} (Kelas: ${kelas})\n` + `├─ Readiness Score: ${score}/100\n` + `├─ Quiz Answer: ${quiz}\n` + `├─ VARK Style: ${vark} (${varkType})\n` + `└─ Devices: ${perangkat}`;
   } catch (error) {
     return "⚠️ Error formatting payload: " + error.message;
   }
@@ -273,9 +256,7 @@ export async function submitDataToSpreadsheet(data) {
     // STEP 4: Check HTTP response status
     // ===================================
     if (!response.ok) {
-      console.error(
-        `❌ Server error: ${response.status} ${response.statusText}`
-      );
+      console.error(`❌ Server error: ${response.status} ${response.statusText}`);
       const errorBody = await response.text();
       console.error("GAS Error Response:", errorBody);
       return false;
@@ -300,7 +281,7 @@ export async function submitDataToSpreadsheet(data) {
           "2. Verify GOOGLE_SHEET_URL in api.js\n" +
           "3. Verify GAS Web App is deployed (Apps Script → Deployments)\n" +
           "4. Check browser console for CORS errors\n" +
-          "5. Try opening GAS URL directly in browser"
+          "5. Try opening GAS URL directly in browser",
       );
     }
 
