@@ -75,7 +75,7 @@ function extractExecutionId(url) {
  *                 - identity {nama, kelas}
  *                 - readiness {sum, avg, if, vlookup, pivot}
  *                 - quiz (string: "a", "b", "c", atau "d")
- *                 - varkAnalysis {code, type}
+ *                 - varkAnalysis {vark_code, vark_type, vark_full}
  *                 - readinessScore (0-100)
  *
  * RETURNS:
@@ -123,9 +123,9 @@ function validatePayload(data) {
     errors.push(`Readiness score out of range: ${data.readinessScore} (expected 0-100)`);
   }
 
-  // Validate VARK code
-  if (data.varkAnalysis && !["V", "A", "R", "K"].includes(data.varkAnalysis.code)) {
-    errors.push(`Invalid VARK code: ${data.varkAnalysis.code}`);
+  // Validate VARK code (fixed: use vark_code not code)
+  if (data.varkAnalysis && !["V", "A", "R", "K"].includes(data.varkAnalysis.vark_code)) {
+    errors.push(`Invalid VARK code: ${data.varkAnalysis.vark_code}`);
   }
 
   return {
@@ -164,8 +164,8 @@ function formatPayloadForLogging(data) {
     const kelas = data.identity?.kelas || "N/A";
     const score = data.readinessScore || "N/A";
     const quiz = data.quiz || "N/A";
-    const vark = data.varkAnalysis?.code || "?";
-    const varkType = data.varkAnalysis?.type || "Unknown";
+    const vark = data.varkAnalysis?.vark_code || "?";
+    const varkType = data.varkAnalysis?.vark_type || "Unknown";
     const perangkat = Array.isArray(data.access_perangkat) ? data.access_perangkat.join(", ") : "N/A";
 
     return `📊 Assessment Data:\n` + `├─ Nama: ${nama} (Kelas: ${kelas})\n` + `├─ Readiness Score: ${score}/100\n` + `├─ Quiz Answer: ${quiz}\n` + `├─ VARK Style: ${vark} (${varkType})\n` + `└─ Devices: ${perangkat}`;
