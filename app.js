@@ -205,10 +205,12 @@ function renderQuestionHTML(q) {
   } else if (q.type === "mcq") {
     q.opts.forEach((o, i) => {
       let cls = "opt";
-      if (ans === o.v) cls += o.ok ? " ok" : " no";
-      else if (ans && o.ok) cls += " ok";
-
       const isSelected = ans === o.v;
+
+      // Show blue highlight when selected (no green/red feedback)
+      if (isSelected) {
+        cls += " sel";
+      }
       html += `<div class="${cls}" role="radio" aria-checked="${isSelected}" tabindex="0" data-action="setMCQ" data-qid="${q.id}" data-val="${o.v}">
                 <div class="okey">${optionKeys[i]}</div>
                 <div class="otxt">
