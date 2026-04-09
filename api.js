@@ -231,7 +231,22 @@ export async function submitDataToSpreadsheet(data) {
   // ====================================
   const validation = validatePayload(data);
   if (!validation.valid) {
-    console.error("❌ Validation failed:", validation.errors);
+    console.error("❌ Validation failed - Data structure invalid:");
+    validation.errors.forEach((err, idx) => {
+      console.error(`   ${idx + 1}. ${err}`);
+    });
+    console.error("\n🎯 Missing Fields Detected:");
+    console.error("   Expected data structure:");
+    console.error("   {");
+    console.error("     identity: { nama, kelas },");
+    console.error("     readiness: { sum, avg, if, vlookup, pivot },");
+    console.error("     quiz: 'a|b|c|d',");
+    console.error("     varkAnalysis: { vark_code, vark_type, vark_full },");
+    console.error("     readinessScore: 0-100,");
+    console.error("     ... other fields ...");
+    console.error("   }");
+    console.error("\n💾 Received data:");
+    console.error(JSON.stringify(data, null, 2));
     return false;
   }
 
